@@ -44,11 +44,13 @@ public class Test extends Application
 
 		Button button = new Button("click me");
 		button.setOnAction(eve -> students.forEach(student -> {
-			student.setName("Anoos " + new Random().nextInt(100));
-			student.setAge(new Random().nextInt(71));
+			student.setName("Anoos " + random.nextInt(100));
+			student.setAge(random.nextInt());
 		}));
 		box.getChildren().add(button);
 		table.getItems().addAll(students);
 	}
+
+	Random random = new Random();
 
 }

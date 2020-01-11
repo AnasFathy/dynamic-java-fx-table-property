@@ -3,8 +3,6 @@ package com.sine.fx.property.dynamic;
 import java.lang.reflect.Field;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import javafx.beans.property.SimpleObjectProperty;
 import net.bytebuddy.ByteBuddy;
@@ -65,8 +63,6 @@ public class PropertyAttcher
 		}
 	}
 
-	private static Map<Class<?>, BuildResult<?>> extentionsMap = new ConcurrentHashMap<>();
-
 	static class BuildResult<T>
 	{
 		private Class<? extends T> klass;
@@ -77,35 +73,31 @@ public class PropertyAttcher
 	@SuppressWarnings("unchecked")
 	private static <T> BuildResult<? extends T> createExtention(Class<T> klass)
 	{
-		if (extentionsMap.containsKey(klass)) {
-			return (BuildResult<? extends T>) extentionsMap.get(klass);
-		} else {
-			SimpleObjectProperty<?> property;
+		SimpleObjectProperty<?> property;
 
-			Builder<T> builder = new ByteBuddy().subclass(klass).modifiers(Visibility.PUBLIC);
-			List<String> names = new LinkedList<>();
-			List<SimpleObjectProperty<?>> props = new LinkedList<>();
-			for (Field field : Student.class.getDeclaredFields()) {
-				String propertyName = field.getName() + "Property";
-				property = new SimpleObjectProperty<>();
-				names.add(propertyName);
-				props.add(property);
-				builder = builder.defineField(propertyName, SimpleObjectProperty.class, Visibility.PUBLIC)
-						.defineMethod(propertyName, SimpleObjectProperty.class, Visibility.PUBLIC)
-						.intercept(FixedValue.value(property));
-			}
-
-			Class<? extends T> type = builder.make()
-					.load(Student.class.getClassLoader(), ClassLoadingStrategy.Default.INJECTION).getLoaded();
-
-			BuildResult<T> result = new BuildResult<>();
-			result.klass = type;
-			result.names = names;
-			result.props = props;
-
-			extentionsMap.put(klass, result);
-			return result;
+		Builder<T> builder = new ByteBuddy().subclass(klass).modifiers(Visibility.PUBLIC);
+		List<String> names = new LinkedList<>();
+		List<SimpleObjectProperty<?>> props = new LinkedList<>();
+		for (Field field : Student.class.getDeclaredFields()) {
+			String propertyName = field.getName() + "Property";
+			property = new SimpleObjectProperty<>();
+			names.add(propertyName);
+			props.add(property);
+			builder = builder.defineField(propertyName, SimpleObjectProperty.class, Visibility.PUBLIC)
+					.defineMethod(propertyName, SimpleObjectProperty.class, Visibility.PUBLIC)
+					.intercept(FixedValue.value(property));
 		}
+
+		Class<? extends T> type = builder.make()
+				.load(Student.class.getClassLoader(), ClassLoadingStrategy.Default.INJECTION).getLoaded();
+
+		BuildResult<T> result = new BuildResult<>();
+		result.klass = type;
+		result.names = names;
+		result.props = props;
+
+		return result;
+
 	}
 
 	private PropertyAttcher()
